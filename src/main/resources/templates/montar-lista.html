@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Montar Lista de Compras')}"></head>
+<body class="bg-zinc-50 min-h-screen flex flex-col">
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <!-- Cabeçalho -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Montar & Planejar Lista de Compras</h1>
+            <p class="text-sm text-zinc-500 mt-0.5">Selecione uma lista, vincule estabelecimentos e adicione os produtos desejados.</p>
+        </div>
+
+        <!-- Barra de Seleção de Lista Ativa -->
+        <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex-1">
+                    <label for="select-lista" class="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
+                        Lista Ativa:
+                    </label>
+                    <select id="select-lista" onchange="onSelectListaChange()" class="w-full sm:max-w-md px-3 py-2 rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-950 font-medium text-sm bg-white">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openModalAddItem()" id="btn-add-item" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm transition-colors">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Item
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Totalizadores com Skeletons -->
+        <div id="totais-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-md bg-zinc-100 text-zinc-700 flex items-center justify-center border border-zinc-200/50">
+                    <i data-lucide="package-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-medium text-zinc-400">Itens na Lista</span>
+                    <h3 id="total-itens-count" class="text-xl font-bold text-zinc-900">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-md bg-zinc-100 text-zinc-700 flex items-center justify-center border border-zinc-200/50">
+                    <i data-lucide="calculator" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-medium text-zinc-400">Quantidade Total</span>
+                    <h3 id="total-unidades-count" class="text-xl font-bold text-zinc-900">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border border-emerald-200 shadow-sm flex items-center gap-3.5 bg-emerald-50/40">
+                <div class="w-10 h-10 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                    <i data-lucide="banknote" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-medium text-emerald-800">Valor Total da Compra</span>
+                    <h3 id="total-valor-geral" class="text-xl font-black text-emerald-700">R$ 0,00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Itens -->
+        <div class="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-zinc-100 flex items-center justify-between">
+                <h2 class="font-semibold text-zinc-900 text-sm flex items-center gap-2">
+                    <i data-lucide="shopping-cart" class="w-4 h-4 text-emerald-600"></i> Itens da Lista
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span id="filtro-info" class="text-xs text-zinc-400">Filtro:</span>
+                    <select id="filtro-status" onchange="renderItens()" class="text-xs border border-zinc-200 rounded-md px-2.5 py-1 bg-white focus:outline-none">
+                        <option value="todos">Todos os itens</option>
+                        <option value="pendentes">Apenas pendentes</option>
+                        <option value="comprados">Apenas comprados</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tabela de Itens -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-zinc-50 text-zinc-600 text-xs font-medium border-b border-zinc-100">
+                        <tr>
+                            <th class="py-3 px-4 w-12 text-center">Status</th>
+                            <th class="py-3 px-4">Produto</th>
+                            <th class="py-3 px-4">Estabelecimento</th>
+                            <th class="py-3 px-4 text-center">Qtd</th>
+                            <th class="py-3 px-4 text-right">Valor Unitário</th>
+                            <th class="py-3 px-4 text-right">Subtotal</th>
+                            <th class="py-3 px-4 text-center w-24">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itens-tbody" class="divide-y divide-zinc-100">
+                        <!-- Skeletons enquanto carrega -->
+                        <tr class="animate-pulse">
+                            <td class="py-4 px-4 text-center"><div class="w-4 h-4 bg-zinc-100 rounded mx-auto"></div></td>
+                            <td class="py-4 px-4"><div class="h-4 bg-zinc-100 rounded w-48 mb-1"></div><div class="h-3 bg-zinc-100 rounded w-24"></div></td>
+                            <td class="py-4 px-4"><div class="h-4 bg-zinc-100 rounded w-32"></div></td>
+                            <td class="py-4 px-4 text-center"><div class="h-4 bg-zinc-100 rounded w-12 mx-auto"></div></td>
+                            <td class="py-4 px-4 text-right"><div class="h-4 bg-zinc-100 rounded w-16 ml-auto"></div></td>
+                            <td class="py-4 px-4 text-right"><div class="h-4 bg-zinc-100 rounded w-20 ml-auto"></div></td>
+                            <td class="py-4 px-4 text-center"><div class="h-6 bg-zinc-100 rounded w-16 mx-auto"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Adicionar / Editar Item na Lista -->
+    <div id="modal-item" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-lg w-full p-6 shadow-xl border border-zinc-200 transform transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
+                <h3 id="modal-item-title" class="font-semibold text-base text-zinc-900">Adicionar Item à Lista</h3>
+                <button onclick="closeModalItem()" class="text-zinc-400 hover:text-zinc-600 rounded p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form id="form-item" onsubmit="handleSalvarItem(event)" class="mt-4 space-y-4">
+                <input type="hidden" id="item-id" value="">
+
+                <!-- Seleção do Produto -->
+                <div>
+                    <label for="item-produto-id" class="block text-xs font-medium text-zinc-700 mb-1.5">
+                        Produto <span class="text-red-500">*</span>
+                    </label>
+                    <select id="item-produto-id" required class="w-full px-3 py-2 rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-950 text-sm bg-white">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <!-- Seleção do Estabelecimento Opcional -->
+                <div>
+                    <label for="item-est-id" class="block text-xs font-medium text-zinc-700 mb-1.5">
+                        Estabelecimento Vinculado (Opcional)
+                    </label>
+                    <select id="item-est-id" class="w-full px-3 py-2 rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-950 text-sm bg-white">
+                        <option value="">-- Nenhum estabelecimento vinculado --</option>
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <!-- Quantidade e Valor -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="item-qtd" class="block text-xs font-medium text-zinc-700 mb-1.5">
+                            Quantidade <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="item-qtd" step="0.1" min="0.1" value="1" required 
+                               class="w-full px-3 py-2 rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-950 text-sm">
+                    </div>
+                    <div>
+                        <label for="item-valor" class="block text-xs font-medium text-zinc-700 mb-1.5">
+                            Valor Unitário (R$)
+                        </label>
+                        <input type="number" id="item-valor" step="0.01" min="0" value="0.00" 
+                               class="w-full px-3 py-2 rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-950 text-sm">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-zinc-100">
+                    <button type="button" onclick="closeModalItem()" class="px-3 py-1.5 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-100 border border-zinc-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm">
+                        Salvar Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+
+    <script>
+        let currentListaId = '';
+
+        function initSelects() {
+            const selectLista = document.getElementById('select-lista');
+            const selectProduto = document.getElementById('item-produto-id');
+            const selectEst = document.getElementById('item-est-id');
+
+            const listas = StorageService.getListas();
+            const produtos = StorageService.getProdutos();
+            const estabelecimentos = StorageService.getEstabelecimentos();
+
+            // Parâmetro de URL opcional ?listaId=xyz
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramId = urlParams.get('listaId');
+
+            if (listas.length === 0) {
+                selectLista.innerHTML = '<option value="">Nenhuma lista cadastrada. Crie uma em "Listas" primeiro.</option>';
+                document.getElementById('btn-add-item').disabled = true;
+                document.getElementById('btn-add-item').classList.add('opacity-50', 'cursor-not-allowed');
+                currentListaId = '';
+            } else {
+                selectLista.innerHTML = listas.map(l => `
+                    <option value="${l.id}">${escapeHtml(l.nome)}</option>
+                `).join('');
+
+                if (paramId && listas.some(l => l.id === paramId)) {
+                    selectLista.value = paramId;
+                }
+                currentListaId = selectLista.value;
+                document.getElementById('btn-add-item').disabled = false;
+                document.getElementById('btn-add-item').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Produtos
+            if (produtos.length === 0) {
+                selectProduto.innerHTML = '<option value="">Nenhum produto cadastrado no catálogo.</option>';
+            } else {
+                selectProduto.innerHTML = produtos.map(p => `
+                    <option value="${p.id}">${escapeHtml(p.descricao)} (${escapeHtml(p.unidadeMedida)})</option>
+                `).join('');
+            }
+
+            // Estabelecimentos
+            selectEst.innerHTML = '<option value="">-- Nenhum estabelecimento vinculado --</option>' + estabelecimentos.map(e => `
+                <option value="${e.id}">${escapeHtml(e.nome)}</option>
+            `).join('');
+        }
+
+        function onSelectListaChange() {
+            const selectLista = document.getElementById('select-lista');
+            currentListaId = selectLista.value;
+            renderItens();
+        }
+
+        function renderItens() {
+            const tbody = document.getElementById('itens-tbody');
+            const totalItensCount = document.getElementById('total-itens-count');
+            const totalUnidadesCount = document.getElementById('total-unidades-count');
+            const totalValorGeral = document.getElementById('total-valor-geral');
+
+            if (!currentListaId) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-zinc-400">
+                            Nenhuma lista selecionada ou cadastrada.
+                        </td>
+                    </tr>
+                `;
+                totalItensCount.textContent = '0';
+                totalUnidadesCount.textContent = '0';
+                totalValorGeral.textContent = StorageService.formatMoeda(0);
+                return;
+            }
+
+            const todosItens = StorageService.getItens();
+            const produtos = StorageService.getProdutos();
+            const estabelecimentos = StorageService.getEstabelecimentos();
+
+            const itensDaLista = todosItens.filter(i => i.listaId === currentListaId);
+
+            // Filtro por status
+            const filtro = document.getElementById('filtro-status').value;
+            const itensFiltrados = itensDaLista.filter(i => {
+                if (filtro === 'pendentes') return !i.comprado;
+                if (filtro === 'comprados') return i.comprado;
+                return true;
+            });
+
+            // Atualiza totalizadores
+            const qtdTotalUnidades = itensDaLista.reduce((acc, i) => acc + (parseFloat(i.quantidade) || 0), 0);
+            const valorTotalGeral = itensDaLista.reduce((acc, i) => acc + ((parseFloat(i.quantidade) || 0) * (parseFloat(i.valorUnitario) || 0)), 0);
+
+            totalItensCount.textContent = itensDaLista.length;
+            totalUnidadesCount.textContent = qtdTotalUnidades.toLocaleString('pt-BR');
+            totalValorGeral.textContent = StorageService.formatMoeda(valorTotalGeral);
+
+            if (itensFiltrados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-zinc-400">
+                            <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 text-zinc-300"></i>
+                            <p class="font-medium text-zinc-700 text-sm">Nenhum item adicionado a esta lista ainda.</p>
+                            <p class="text-xs text-zinc-400 mt-0.5">Clique em "Adicionar Item" para incluir produtos.</p>
+                        </td>
+                    </tr>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = itensFiltrados.map(item => {
+                const prod = produtos.find(p => p.id === item.produtoId) || { descricao: 'Produto Desconhecido', unidadeMedida: 'un', fotoUrl: '' };
+                const est = estabelecimentos.find(e => e.id === item.estabelecimentoId);
+                const subtotal = (item.quantidade || 0) * (item.valorUnitario || 0);
+
+                const imagemThumb = prod.fotoUrl ? `
+                    <img src="${escapeHtml(prod.fotoUrl)}" class="w-8 h-8 object-cover rounded-md shrink-0 border border-zinc-200" 
+                         onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Foto';">
+                ` : `
+                    <div class="w-8 h-8 bg-zinc-100 text-zinc-400 rounded-md flex items-center justify-center shrink-0 border border-zinc-200">
+                        <i data-lucide="package" class="w-4 h-4"></i>
+                    </div>
+                `;
+
+                return `
+                    <tr class="hover:bg-zinc-50/70 transition-colors ${item.comprado ? 'bg-zinc-50/50' : ''}">
+                        <td class="py-3 px-4 text-center">
+                            <input type="checkbox" onchange="toggleComprado('${item.id}')" ${item.comprado ? 'checked' : ''} 
+                                   class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-zinc-300 cursor-pointer" 
+                                   title="Marcar como comprado">
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-2.5">
+                                ${imagemThumb}
+                                <div>
+                                    <span class="font-medium text-zinc-900 text-sm ${item.comprado ? 'line-through text-zinc-400' : ''}">
+                                        ${escapeHtml(prod.descricao)}
+                                    </span>
+                                    <span class="block text-xs text-zinc-400 font-normal">${escapeHtml(prod.unidadeMedida || 'un')}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            ${est ? `
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-800 border border-zinc-200">
+                                    <i data-lucide="store" class="w-3 h-3 text-zinc-500"></i> ${escapeHtml(est.nome)}
+                                </span>
+                            ` : `
+                                <span class="text-xs text-zinc-400 italic">Sem local</span>
+                            `}
+                        </td>
+                        <td class="py-3 px-4 text-center font-semibold text-zinc-800 text-sm">
+                            ${item.quantidade}
+                        </td>
+                        <td class="py-3 px-4 text-right text-zinc-600 text-sm">
+                            ${StorageService.formatMoeda(item.valorUnitario)}
+                        </td>
+                        <td class="py-3 px-4 text-right font-semibold text-emerald-700 text-sm">
+                            ${StorageService.formatMoeda(subtotal)}
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="editarItem('${item.id}')" class="p-1.5 rounded-md text-zinc-600 hover:bg-zinc-100 border border-zinc-200 bg-white transition-colors" title="Editar item">
+                                    <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                </button>
+                                <button onclick="excluirItem('${item.id}')" class="p-1.5 rounded-md text-zinc-600 hover:text-rose-600 hover:bg-zinc-100 border border-zinc-200 bg-white transition-colors" title="Remover item">
+                                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openModalAddItem(id = '', prodId = '', estId = '', qtd = 1, valor = 0) {
+            if (!currentListaId) {
+                alert('Por favor, crie uma lista primeiro.');
+                return;
+            }
+
+            const produtos = StorageService.getProdutos();
+            if (produtos.length === 0) {
+                if (confirm('Você ainda não tem nenhum produto cadastrado no catálogo. Deseja ir para a tela de produtos?')) {
+                    window.location.href = '/produtos';
+                }
+                return;
+            }
+
+            document.getElementById('item-id').value = id;
+            document.getElementById('modal-item-title').textContent = id ? 'Editar Item da Lista' : 'Adicionar Item à Lista';
+            
+            if (prodId) {
+                document.getElementById('item-produto-id').value = prodId;
+            }
+            document.getElementById('item-est-id').value = estId || '';
+            document.getElementById('item-qtd').value = qtd;
+            document.getElementById('item-valor').value = valor;
+
+            document.getElementById('modal-item').classList.remove('hidden');
+        }
+
+        function closeModalItem() {
+            document.getElementById('modal-item').classList.add('hidden');
+        }
+
+        function handleSalvarItem(event) {
+            event.preventDefault();
+            const id = document.getElementById('item-id').value;
+            const produtoId = document.getElementById('item-produto-id').value;
+            const estabelecimentoId = document.getElementById('item-est-id').value;
+            const quantidade = document.getElementById('item-qtd').value;
+            const valorUnitario = document.getElementById('item-valor').value;
+
+            if (!produtoId) {
+                alert('Selecione um produto.');
+                return;
+            }
+
+            if (id) {
+                StorageService.updateItem(id, quantidade, valorUnitario, estabelecimentoId);
+                showToast('Item atualizado com sucesso!');
+            } else {
+                StorageService.addItem(currentListaId, estabelecimentoId, produtoId, quantidade, valorUnitario);
+                showToast('Item adicionado à lista!');
+            }
+
+            closeModalItem();
+            renderItens();
+        }
+
+        function editarItem(id) {
+            const itens = StorageService.getItens();
+            const item = itens.find(i => i.id === id);
+            if (item) {
+                openModalAddItem(item.id, item.produtoId, item.estabelecimentoId, item.quantidade, item.valorUnitario);
+            }
+        }
+
+        function toggleComprado(id) {
+            StorageService.toggleItemComprado(id);
+            renderItens();
+        }
+
+        function excluirItem(id) {
+            if (confirm('Deseja remover este item da lista?')) {
+                StorageService.deleteItem(id);
+                showToast('Item removido com sucesso!');
+                renderItens();
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSelects();
+            setTimeout(renderItens, 200);
+        });
+    </script>
+</body>
+</html>

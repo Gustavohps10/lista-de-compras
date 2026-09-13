@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - Lista de Compras'">Lista de Compras</title>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Storage JS centralizado -->
+    <script th:src="@{/js/storage.js}"></script>
+</head>
+<body class="bg-zinc-50 min-h-screen flex flex-col font-sans antialiased text-zinc-900">
+
+    <!-- Header / Navbar Principal -->
+    <header th:fragment="navbar" class="bg-white border-b border-zinc-200/80 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14 items-center">
+                <!-- Logotipo / Home -->
+                <a href="/" class="flex items-center gap-2.5 group">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm group-hover:bg-emerald-700 transition-colors">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-semibold text-sm text-zinc-900 tracking-tight">Lista de Compras</span>
+                        <span class="text-xs text-zinc-400 font-normal hidden sm:inline">Planejamento</span>
+                    </div>
+                </a>
+
+                <!-- Navegação Principal -->
+                <nav class="hidden md:flex items-center gap-1">
+                    <a href="/" th:class="${activeMenu == 'home'} ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-100 text-zinc-900' : 'px-3 py-1.5 rounded-md text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors'">
+                        Início
+                    </a>
+                    <a href="/listas" th:class="${activeMenu == 'listas'} ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-100 text-zinc-900' : 'px-3 py-1.5 rounded-md text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors'">
+                        Listas de Compras
+                    </a>
+                    <a href="/estabelecimentos" th:class="${activeMenu == 'estabelecimentos'} ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-100 text-zinc-900' : 'px-3 py-1.5 rounded-md text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors'">
+                        Estabelecimentos
+                    </a>
+                    <a href="/produtos" th:class="${activeMenu == 'produtos'} ? 'px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-100 text-zinc-900' : 'px-3 py-1.5 rounded-md text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors'">
+                        Produtos
+                    </a>
+                    <a href="/montar-lista" th:class="${activeMenu == 'montar-lista'} ? 'ml-2 px-3 py-1.5 rounded-md text-sm font-medium bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-colors' : 'ml-2 px-3 py-1.5 rounded-md text-sm font-medium border border-zinc-200 text-zinc-700 bg-white hover:bg-zinc-50 shadow-sm transition-colors'">
+                        Montar Lista
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Menu Mobile -->
+        <div class="md:hidden border-t border-zinc-100 px-4 py-2 flex flex-wrap gap-1.5 bg-zinc-50/70 text-xs">
+            <a href="/" class="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700 font-medium">Início</a>
+            <a href="/listas" class="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700 font-medium">Listas</a>
+            <a href="/estabelecimentos" class="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700 font-medium">Locais</a>
+            <a href="/produtos" class="px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700 font-medium">Produtos</a>
+            <a href="/montar-lista" class="px-2.5 py-1 rounded-md bg-emerald-600 text-white font-medium">Montar</a>
+        </div>
+    </header>
+
+    <!-- Toast de Notificação -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script th:fragment="scripts">
+        // Inicializa ícones Lucide
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+
+        // Função para disparar toast de feedback
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const isSuccess = type === 'success';
+            toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-md border text-sm font-medium transition-all duration-200 transform translate-y-2 pointer-events-auto bg-white ${
+                isSuccess ? 'text-zinc-900 border-zinc-200' : 'text-rose-900 border-rose-200 bg-rose-50'
+            }`;
+            
+            toast.innerHTML = `
+                <i data-lucide="${isSuccess ? 'check' : 'alert-triangle'}" class="w-4 h-4 ${isSuccess ? 'text-emerald-600' : 'text-rose-600'}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            if (window.lucide) lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 200);
+            }, 3000);
+        }
+    </script>
+
+    <!-- Rodapé -->
+    <footer th:fragment="footer" class="mt-auto bg-white border-t border-zinc-200/80 py-5 text-center text-xs text-zinc-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-medium text-zinc-600">Sistema Lista de Compras • Engenharia de Software</p>
+            <p class="text-zinc-400 mt-0.5">Java (Spring Boot) + Thymeleaf + LocalStorage</p>
+        </div>
+    </footer>
+</body>
+</html>

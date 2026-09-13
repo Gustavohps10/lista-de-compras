@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Início')}"></head>
+<body class="bg-zinc-50 min-h-screen flex flex-col">
+
+    <div th:replace="~{fragments/layout :: navbar}"></div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <!-- Hero Header (Preservado conforme solicitado) -->
+        <div class="bg-gradient-to-r from-brand-700 via-brand-600 to-emerald-600 rounded-2xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-sm mb-4">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Sistema de Planejamento de Compras
+                </span>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Organize suas compras com inteligência</h1>
+                <p class="mt-3 text-emerald-100 text-sm sm:text-base leading-relaxed">
+                    Cadastre os estabelecimentos que você frequenta, acompanhe os dias de promoção, gerencie seus produtos e monte suas listas sem surpresas no caixa.
+                </p>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="/montar-lista" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-emerald-700 font-semibold text-sm shadow-sm hover:bg-emerald-50 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Montar Nova Lista
+                    </a>
+                    <a href="/listas" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-800/60 text-white font-medium text-sm hover:bg-emerald-800 transition-colors">
+                        <i data-lucide="list" class="w-4 h-4"></i> Ver Minhas Listas
+                    </a>
+                </div>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-80 h-80 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        </div>
+
+        <!-- Estatísticas Rápidas com Skeletons -->
+        <div class="mb-8">
+            <h2 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Visão Geral</h2>
+            <div id="stats-container" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Skeletons enquanto carrega do LocalStorage -->
+                <div class="stat-skeleton bg-white p-4 rounded-lg border border-zinc-200 shadow-sm animate-pulse flex items-center gap-3">
+                    <div class="w-10 h-10 bg-zinc-100 rounded-md"></div>
+                    <div class="space-y-1.5 flex-1">
+                        <div class="h-3 bg-zinc-100 rounded w-1/2"></div>
+                        <div class="h-5 bg-zinc-100 rounded w-3/4"></div>
+                    </div>
+                </div>
+                <div class="stat-skeleton bg-white p-4 rounded-lg border border-zinc-200 shadow-sm animate-pulse flex items-center gap-3">
+                    <div class="w-10 h-10 bg-zinc-100 rounded-md"></div>
+                    <div class="space-y-1.5 flex-1">
+                        <div class="h-3 bg-zinc-100 rounded w-1/2"></div>
+                        <div class="h-5 bg-zinc-100 rounded w-3/4"></div>
+                    </div>
+                </div>
+                <div class="stat-skeleton bg-white p-4 rounded-lg border border-zinc-200 shadow-sm animate-pulse flex items-center gap-3">
+                    <div class="w-10 h-10 bg-zinc-100 rounded-md"></div>
+                    <div class="space-y-1.5 flex-1">
+                        <div class="h-3 bg-zinc-100 rounded w-1/2"></div>
+                        <div class="h-5 bg-zinc-100 rounded w-3/4"></div>
+                    </div>
+                </div>
+                <div class="stat-skeleton bg-white p-4 rounded-lg border border-zinc-200 shadow-sm animate-pulse flex items-center gap-3">
+                    <div class="w-10 h-10 bg-zinc-100 rounded-md"></div>
+                    <div class="space-y-1.5 flex-1">
+                        <div class="h-3 bg-zinc-100 rounded w-1/2"></div>
+                        <div class="h-5 bg-zinc-100 rounded w-3/4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu de Funcionalidades (3 Colunas / Cores Uniformes) -->
+        <div class="mb-10">
+            <h2 class="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <i data-lucide="layout-grid" class="w-4 h-4 text-emerald-600"></i> Funcionalidades
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                <!-- 1. Minhas listas de compras -->
+                <a href="/listas" class="bg-white p-5 rounded-lg border border-zinc-200/90 shadow-sm hover:border-zinc-300 hover:shadow transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-md bg-zinc-100 text-zinc-700 flex items-center justify-center mb-3.5 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-semibold text-zinc-900 group-hover:text-emerald-700 transition-colors">Minhas Listas de Compras</h3>
+                        <p class="text-xs text-zinc-500 mt-1.5 leading-relaxed">
+                            Crie, renomeie e consulte suas listas de compras para organizar os itens por ocasião.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center text-xs font-medium text-zinc-500 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all">
+                        Acessar Listas <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                    </div>
+                </a>
+
+                <!-- 2. Estabelecimentos -->
+                <a href="/estabelecimentos" class="bg-white p-5 rounded-lg border border-zinc-200/90 shadow-sm hover:border-zinc-300 hover:shadow transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-md bg-zinc-100 text-zinc-700 flex items-center justify-center mb-3.5 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                            <i data-lucide="store" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-semibold text-zinc-900 group-hover:text-emerald-700 transition-colors">Estabelecimentos</h3>
+                        <p class="text-xs text-zinc-500 mt-1.5 leading-relaxed">
+                            Cadastre supermercados, feiras e farmácias com os dias específicos em que costuma haver promoções.
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center text-xs font-medium text-zinc-500 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all">
+                        Gerenciar Locais <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                    </div>
+                </a>
+
+                <!-- 3. Gerenciar Produtos -->
+                <a href="/produtos" class="bg-white p-5 rounded-lg border border-zinc-200/90 shadow-sm hover:border-zinc-300 hover:shadow transition-all group flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-md bg-zinc-100 text-zinc-700 flex items-center justify-center mb-3.5 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition-colors">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-semibold text-zinc-900 group-hover:text-emerald-700 transition-colors">Gerenciar Produtos</h3>
+                        <p class="text-xs text-zinc-500 mt-1.5 leading-relaxed">
+                            Cadastre itens com foto, descrição e unidade de medida (unidade, kg, litro, caixa ou pacote).
+                        </p>
+                    </div>
+                    <div class="mt-5 flex items-center text-xs font-medium text-zinc-500 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all">
+                        Gerenciar Produtos <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/layout :: footer}"></div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+
+    <script>
+        // Carrega dados e substitui os skeletons nas estatísticas
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const listas = StorageService.getListas();
+                const estabelecimentos = StorageService.getEstabelecimentos();
+                const produtos = StorageService.getProdutos();
+                const itens = StorageService.getItens();
+
+                const totalGasto = itens.reduce((acc, item) => acc + (item.quantidade * item.valorUnitario), 0);
+
+                const container = document.getElementById('stats-container');
+                container.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3">
+                        <div class="w-10 h-10 bg-zinc-100 text-zinc-700 rounded-md flex items-center justify-center">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-zinc-400">Listas Criadas</span>
+                            <h3 class="text-xl font-bold text-zinc-900">${listas.length}</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3">
+                        <div class="w-10 h-10 bg-zinc-100 text-zinc-700 rounded-md flex items-center justify-center">
+                            <i data-lucide="store" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-zinc-400">Estabelecimentos</span>
+                            <h3 class="text-xl font-bold text-zinc-900">${estabelecimentos.length}</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3">
+                        <div class="w-10 h-10 bg-zinc-100 text-zinc-700 rounded-md flex items-center justify-center">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-zinc-400">Produtos</span>
+                            <h3 class="text-xl font-bold text-zinc-900">${produtos.length}</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg border border-zinc-200 shadow-sm flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-700 rounded-md flex items-center justify-center">
+                            <i data-lucide="banknote" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-zinc-400">Total Planejado</span>
+                            <h3 class="text-xl font-bold text-emerald-700">${StorageService.formatMoeda(totalGasto)}</h3>
+                        </div>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+            }, 300);
+        });
+    </script>
+</body>
+</html>
